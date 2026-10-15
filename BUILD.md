@@ -1,63 +1,66 @@
-# Сборка Split Proxy Windows
+# Сборка Split Proxy Windows 0.1.1
 
-## 1. Что установить на ПК разработчика
+## GitHub Actions — рекомендуемый способ
 
-Нужно только для сборки, не для конечного пользователя:
+Загрузите содержимое этого исходного архива в корень репозитория и запустите:
 
-1. Windows 10/11 x64.
-2. Visual Studio 2022/актуальный Visual Studio с workload **Desktop development with .NET** и **Desktop development with C++**.
-3. .NET 10 SDK.
-4. CMake 3.20+ (можно компонент Visual Studio).
-5. Git.
-6. Inno Setup 6.
+**Actions → Build Split Proxy Windows → Run workflow**
 
-## 2. Сборка одной командой
-
-Откройте **Developer PowerShell for Visual Studio** от обычного пользователя и выполните:
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass
-cd C:\path\to\SplitProxyWindows-v0.1.0
-.\scripts\Build-All.ps1
-```
-
-Скрипт:
-
-1. скачает и зафиксирует `wfp-divert` на commit `8179c800...`;
-2. скачает WinDivert 2.2.2-A и проверит SHA-256;
-3. соберёт нативный C++ сетевой движок x64;
-4. опубликует App/Service/Updater как self-contained .NET 10;
-5. соберёт один установщик `dist\SplitProxySetup.exe`.
-
-## 3. Что получает пользователь
-
-Пользователю отдаётся только:
+Workflow использует Windows Server 2025, .NET 10, CMake/MSVC и Inno Setup. Результат — artifact `SplitProxy-Windows-Setup` с файлом:
 
 ```text
 SplitProxySetup.exe
 ```
 
-Установка требует UAC, потому что ставится Windows-служба и используется подписанный WinDivert-драйвер. Отдельно .NET, Visual C++ Redistributable, WinDivert, CMake и другие библиотеки устанавливать не нужно.
+В v0.1.1 исправлена первая ошибка сборки: WinDivert 2.2.2 не имеет release asset `WinDivert-2.2.2-Source.zip`. Сборка теперь использует существующий официальный `WinDivert-2.2.2-A.zip` и фиксированный SHA-256. Также workflow обновлён на актуальные major actions, чтобы убрать предупреждение Node.js 20.
 
-## 4. Проверка после установки
+## Локальная сборка
+
+На ПК разработчика нужны:
+
+1. Windows 10/11 x64.
+2. Visual Studio с **Desktop development with .NET** и **Desktop development with C++**.
+3. .NET 10 SDK.
+4. CMake 3.20+.
+5. Git.
+6. Inno Setup 6.
+
+Developer PowerShell:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+cd C:\path\to\SplitProxyWindows-v0.1.1
+.\scripts\Build-All.ps1
+```
+
+Скрипт автоматически:
+
+1. клонирует `wfp-divert` на commit `8179c800dafa9efe8f8f27d34098b306c7affd7b`;
+2. применяет `patches/wfp-divert-socks-auth.patch`;
+3. скачивает WinDivert 2.2.2-A и проверяет SHA-256;
+4. собирает C++ route engine x64;
+5. публикует App/Service/Updater как self-contained .NET 10;
+6. собирает `dist\SplitProxySetup.exe`.
+
+## На ПК пользователя
+
+Пользователю нужен только `SplitProxySetup.exe`. Дополнительные runtime/библиотеки вручную не устанавливаются.
+
+После установки:
 
 ```powershell
 sc.exe query SplitProxyService
 Get-Process SplitProxy -ErrorAction SilentlyContinue
 ```
 
-В `%ProgramData%\SplitProxy` будут:
+Данные:
 
-- `client-state.json` — выбранные программы и текущий SOCKS5 endpoint без секретов;
-- `service-status.json` — состояние службы;
-- `engine.log`, `engine-error.log` — диагностика сетевого движка.
+- `%ProgramData%\SplitProxy\client-state.json` — содержимое защищено DPAPI LocalMachine;
+- `%ProgramData%\SplitProxy\service-status.json` — состояние службы;
+- `%ProgramData%\SplitProxyService\engine\config.json` — конфиг route engine без SOCKS5 password;
+- `%ProgramData%\SplitProxyService\engine.log` и `engine-error.log` — диагностика;
+- `%LocalAppData%\SplitProxy` — account/device secrets, DPAPI CurrentUser.
 
-Секретные токены и закрытый ECDSA-ключ находятся только в `%LocalAppData%\SplitProxy` и защищены DPAPI.
+## Релиз
 
-## 5. Подписание релиза
-
-Перед публичным выпуском желательно подписывать `SplitProxySetup.exe`, `SplitProxy.exe`, `SplitProxy.Service.exe` и `SplitProxy.Updater.exe` Authenticode-сертификатом. WinDivert 2.2.2-A уже содержит подписанный драйвер, но для коммерческого релиза следует отдельно проверить лицензионные требования WinDivert.
-
-## 6. Сборка через GitHub Actions
-
-В комплекте есть `.github/workflows/build-windows.yml`. После загрузки исходников в GitHub можно запустить **Actions → Build Split Proxy Windows → Run workflow**. Результатом будет artifact `SplitProxy-Windows-Setup` с одним `SplitProxySetup.exe`.
+Перед публичной раздачей желательно Authenticode-подписание собственных EXE и установщика. WinDivert поставляется с его подписанным драйвером.

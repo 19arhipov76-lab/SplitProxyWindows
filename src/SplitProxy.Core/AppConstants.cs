@@ -14,6 +14,10 @@ public static class AppConstants
     public static string MachineDataDirectory => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "SplitProxy");
 
+    // Private working directory of the LocalSystem service/route engine.
+    public static string ServiceDataDirectory => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "SplitProxyService");
+
     public static string AppStatePath => Path.Combine(MachineDataDirectory, "client-state.json");
     public static string ServiceStatusPath => Path.Combine(MachineDataDirectory, "service-status.json");
 }

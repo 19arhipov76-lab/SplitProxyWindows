@@ -80,6 +80,6 @@ public sealed class Worker(ILogger<Worker> log, RouteEngineManager engine) : Bac
     private static string Fingerprint(ClientState state)
     {
         var apps = string.Join('|', state.Applications.OrderBy(x => x, StringComparer.OrdinalIgnoreCase));
-        return $"{state.Enabled}|{IsAuthorized(state)}|{state.AuthorizedProcessId}|{state.Proxy?.Host}|{state.Proxy?.Port}|{state.Proxy?.Protocol}|{apps}";
+        return $"{state.Enabled}|{IsAuthorized(state)}|{state.AuthorizedProcessId}|{state.Proxy?.Host}|{state.Proxy?.Port}|{state.Proxy?.Protocol}|{state.Proxy?.Username}|{state.Proxy?.Password}|{apps}";
     }
 }

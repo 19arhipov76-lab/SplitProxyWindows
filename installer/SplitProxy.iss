@@ -1,5 +1,5 @@
 #define MyAppName "Split Proxy"
-#define MyAppVersion "0.1.0"
+#define MyAppVersion "0.1.1"
 #define MyAppPublisher "Split Proxy"
 #define MyAppExeName "SplitProxy.exe"
 
@@ -24,7 +24,7 @@ SetupLogging=yes
 
 [Dirs]
 Name: "{commonappdata}\SplitProxy"; Permissions: users-modify
-Name: "{commonappdata}\SplitProxy\engine"; Permissions: users-modify
+Name: "{commonappdata}\SplitProxyService"; Permissions: admins-full system-full
 
 [Files]
 Source: "..\dist\stage\app\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

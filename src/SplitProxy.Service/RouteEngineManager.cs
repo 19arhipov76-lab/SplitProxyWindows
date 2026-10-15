@@ -17,6 +17,9 @@ public sealed class RouteEngineManager
     public async Task StartOrReloadAsync(ClientState state, CancellationToken ct)
     {
         var proxy = state.Proxy ?? throw new InvalidOperationException("Proxy missing.");
+        if (string.IsNullOrWhiteSpace(proxy.Username) || string.IsNullOrWhiteSpace(proxy.Password))
+            throw new InvalidOperationException("SOCKS5 credentials missing.");
+
         var apps = state.Applications
             .Where(File.Exists)
             .Where(x => !BrowserGuard.IsForbidden(x))
@@ -28,11 +31,13 @@ public sealed class RouteEngineManager
         if (apps.Length == 0) throw new InvalidOperationException("Нет разрешённых приложений для маршрутизации.");
 
         var engineDir = Path.Combine(AppContext.BaseDirectory, "engine");
-        var workDir = Path.Combine(AppConstants.MachineDataDirectory, "engine");
+        var workDir = Path.Combine(AppConstants.ServiceDataDirectory, "engine");
         Directory.CreateDirectory(workDir);
         var exe = Path.Combine(engineDir, "SplitProxy.RouteEngine.exe");
         if (!File.Exists(exe)) throw new FileNotFoundException("Не найден сетевой движок.", exe);
 
+        // Credentials are NOT written to the route-engine config file. They are passed
+        // only to the child process environment and live in memory of the service/engine.
         var config = new
         {
             proxy_host = proxy.Host,
@@ -46,15 +51,16 @@ public sealed class RouteEngineManager
             geoip = Array.Empty<string>()
         };
         var text = JsonSerializer.Serialize(config, _json);
+        var fingerprint = text + "\n" + proxy.Username + "\n" + proxy.Password;
         var configPath = Path.Combine(workDir, "config.json");
         File.WriteAllText(configPath + ".tmp", text);
         File.Move(configPath + ".tmp", configPath, true);
 
-        if (_process is { HasExited: false } && text == _lastConfig) return;
+        if (_process is { HasExited: false } && fingerprint == _lastConfig) return;
         await StopAsync();
-        _lastConfig = text;
+        _lastConfig = fingerprint;
 
-        _process = Process.Start(new ProcessStartInfo
+        var psi = new ProcessStartInfo
         {
             FileName = exe,
             WorkingDirectory = workDir,
@@ -63,9 +69,13 @@ public sealed class RouteEngineManager
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true
-        }) ?? throw new InvalidOperationException("Не удалось запустить сетевой движок.");
-        _ = DrainAsync(_process.StandardOutput, Path.Combine(AppConstants.MachineDataDirectory, "engine.log"), ct);
-        _ = DrainAsync(_process.StandardError, Path.Combine(AppConstants.MachineDataDirectory, "engine-error.log"), ct);
+        };
+        psi.Environment["SPLITPROXY_SOCKS_USERNAME"] = proxy.Username;
+        psi.Environment["SPLITPROXY_SOCKS_PASSWORD"] = proxy.Password;
+
+        _process = Process.Start(psi) ?? throw new InvalidOperationException("Не удалось запустить сетевой движок.");
+        _ = DrainAsync(_process.StandardOutput, Path.Combine(AppConstants.ServiceDataDirectory, "engine.log"), ct);
+        _ = DrainAsync(_process.StandardError, Path.Combine(AppConstants.ServiceDataDirectory, "engine-error.log"), ct);
         await Task.Delay(700, ct);
         if (_process.HasExited)
             throw new InvalidOperationException($"Сетевой движок завершился с кодом {_process.ExitCode}. См. engine-error.log.");

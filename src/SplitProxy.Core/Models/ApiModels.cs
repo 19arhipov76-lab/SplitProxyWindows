@@ -24,7 +24,9 @@ public sealed record ProxyRoute(
     [property: JsonPropertyName("exit_country")] string? ExitCountry,
     [property: JsonPropertyName("entry_node")] string? EntryNode,
     [property: JsonPropertyName("exit_node")] string? ExitNode,
-    [property: JsonPropertyName("checked_at")] string? CheckedAt);
+    [property: JsonPropertyName("checked_at")] string? CheckedAt,
+    [property: JsonPropertyName("username")] string? Username,
+    [property: JsonPropertyName("password")] string? Password);
 
 public sealed class DeviceProxyConfig
 {
@@ -64,6 +66,8 @@ public sealed class EngineProxyConfig
     public string Host { get; set; } = "";
     public int Port { get; set; }
     public string Protocol { get; set; } = "socks5";
+    public string Username { get; set; } = "";
+    public string Password { get; set; } = "";
 }
 
 public sealed class ServiceStatus

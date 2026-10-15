@@ -88,10 +88,20 @@ public partial class MainWindow : Window
             if (!proxy.Protocol.Equals("socks5", StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException($"Windows-клиент требует SOCKS5. Сервер вернул {proxy.Protocol}://{proxy.Server}:{proxy.Port}.");
 
-            _state.Proxy = new EngineProxyConfig { Host = proxy.Server, Port = proxy.Port, Protocol = "socks5" };
+            if (string.IsNullOrWhiteSpace(proxy.Username) || string.IsNullOrWhiteSpace(proxy.Password))
+                throw new InvalidOperationException("Сервер не вернул данные авторизации SOCKS5.");
+
+            _state.Proxy = new EngineProxyConfig
+            {
+                Host = proxy.Server,
+                Port = proxy.Port,
+                Protocol = "socks5",
+                Username = proxy.Username,
+                Password = proxy.Password
+            };
             _state.Enabled = EnabledToggle.IsChecked == true || _state.Enabled;
             StateFiles.SaveClientState(_state);
-            RouteText.Text = $"{proxy.Server}:{proxy.Port} → {proxy.ExitCountry ?? _proxyConfig.ExitCountry ?? "?"}";
+            RouteText.Text = $"{proxy.EntryNode ?? "RF?"} {proxy.Server}:{proxy.Port} → {proxy.ExitCountry ?? _proxyConfig.ExitCountry ?? "?"}";
             if (showSuccess) MessageText.Text = "Конфигурация обновлена.";
         }
         catch (Exception ex)
