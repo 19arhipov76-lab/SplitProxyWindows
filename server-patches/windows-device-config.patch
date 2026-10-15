@@ -1,0 +1,50 @@
+--- a/app/Services/Devices/ActiveRegisteredDeviceAuth.php
++++ b/app/Services/Devices/ActiveRegisteredDeviceAuth.php
+@@
+-            ->whereIn('platform', ['browser', 'android'])
++            ->whereIn('platform', ['browser', 'android', 'windows'])
+             ->whereNotNull('user_id')
+             ->first();
+
+--- a/app/Services/Proxy/ProxyRouteService.php
++++ b/app/Services/Proxy/ProxyRouteService.php
+@@
+-    public function forCountry(string $country): array
++    public function forCountry(string $country, ?array $protocols = null): array
+     {
+@@
+-            $endpoint = ProxyEndpoint::query()
++            $allowedProtocols = $protocols ?: ['http', 'https', 'socks5'];
++
++            $endpoint = ProxyEndpoint::query()
+                 ->where('node_id', $link->source_node_id)
+                 ->where('is_enabled', true)
+-                ->whereIn('protocol', ['http', 'https', 'socks5'])
++                ->whereIn('protocol', $allowedProtocols)
+@@
+-    public function availableCountries(): Collection
++    public function availableCountries(?array $protocols = null): Collection
+@@
+-                $this->forCountry($country);
++                $this->forCountry($country, $protocols);
+
+--- a/app/Http/Controllers/Api/DeviceProxyConfigController.php
++++ b/app/Http/Controllers/Api/DeviceProxyConfigController.php
+@@
+         $route = $routes->forCountry(is_string($country) ? $country : '');
++
++        if ($device->platform === 'windows') {
++            $route = $routes->forCountry(is_string($country) ? $country : '', ['socks5']);
++
++            return response()->json([
++                'status' => 'ready',
++                'mode' => 'process_proxy',
++                'account_type' => 'registered',
++                'platform' => 'windows',
++                'install_id' => $device->install_id,
++                'plan' => $plan->code,
++                'exit_country' => $route['exit_country'],
++                'available_exit_countries' => $routes->availableCountries(['socks5']),
++                'proxy' => $route,
++            ])->header('Cache-Control', 'no-store');
++        }

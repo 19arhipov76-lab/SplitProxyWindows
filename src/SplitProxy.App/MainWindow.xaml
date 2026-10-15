@@ -1,0 +1,45 @@
+<Window x:Class="SplitProxy.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Split Proxy" Height="600" Width="760" WindowStartupLocation="CenterScreen">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="0,0,0,14">
+            <TextBlock Text="Split Proxy" FontSize="28" FontWeight="SemiBold" DockPanel.Dock="Left"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock x:Name="AccountText" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <Button Content="Выйти из учётной записи" Click="Logout_Click" Padding="10,5"/>
+            </StackPanel>
+        </DockPanel>
+
+        <Border Grid.Row="1" BorderBrush="#DDD" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Состояние" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="StatusText" Text="Подготовка..." Margin="0,4,0,0"/>
+                    <TextBlock x:Name="RouteText" Foreground="#666" Margin="0,2,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="RefreshButton" Content="Обновить конфигурацию" Click="Refresh_Click" Padding="10,5" Margin="0,0,8,0"/>
+                    <ToggleButton x:Name="EnabledToggle" Content="Прокси включён" Checked="Enabled_Checked" Unchecked="Enabled_Unchecked" Padding="10,5"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBlock Text="Программы через Split Proxy" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            <Button Content="Добавить EXE" Click="AddProgram_Click" Margin="16,0,0,0" Padding="10,5"/>
+            <Button Content="Удалить выбранное" Click="RemoveProgram_Click" Margin="8,0,0,0" Padding="10,5"/>
+        </StackPanel>
+
+        <ListBox x:Name="ProgramsList" Grid.Row="3" DisplayMemberPath="" />
+
+        <TextBlock Grid.Row="4" Text="Браузеры добавлять нельзя. Закрытие окна оставляет Split Proxy работающим в системном трее." Foreground="#666" Margin="0,10,0,10"/>
+        <TextBlock Grid.Row="5" x:Name="MessageText" TextWrapping="Wrap" Foreground="DarkRed"/>
+    </Grid>
+</Window>
