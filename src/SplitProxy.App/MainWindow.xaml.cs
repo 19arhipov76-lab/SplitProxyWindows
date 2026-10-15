@@ -1,8 +1,14 @@
 using Microsoft.Win32;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Windows;
+
+using Application = System.Windows.Application;
+using MessageBox = System.Windows.MessageBox;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
+
 using SplitProxy.Core;
 using SplitProxy.Core.Api;
 using SplitProxy.Core.Devices;
